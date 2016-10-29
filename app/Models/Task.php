@@ -15,6 +15,16 @@ class Task extends EntityModel
     use PresentableTrait;
 
     /**
+     * @var array
+     */
+    protected $fillable = [
+        'client_id',
+        'description',
+        'time_log',
+        'is_running',
+    ];
+
+    /**
      * @return mixed
      */
     public function getEntityType()
@@ -80,6 +90,18 @@ class Task extends EntityModel
     public function getStartTime()
     {
         return self::calcStartTime($this);
+    }
+
+    public function getLastStartTime()
+    {
+      $parts = json_decode($this->time_log) ?: [];
+
+      if (count($parts)) {
+          $index = count($parts) - 1;
+          return $parts[$index][0];
+      } else {
+          return '';
+      }
     }
 
     /**

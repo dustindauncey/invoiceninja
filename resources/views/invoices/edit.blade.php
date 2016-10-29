@@ -36,14 +36,15 @@
         <div class="alert alert-danger">{{ trans($errors->first('invoice_items')) }}</div>
     @endif
 
-    @if ($invoice->id)
+	@if ($invoice->id)
 		<ol class="breadcrumb">
-            @if ($invoice->is_recurring)
-             <li>{!! link_to('invoices', trans('texts.recurring_invoice')) !!}</li>
-            @else
-			 <li>{!! link_to(($entityType == ENTITY_QUOTE ? 'quotes' : 'invoices'), trans('texts.' . ($entityType == ENTITY_QUOTE ? 'quotes' : 'invoices'))) !!}</li>
-			 <li class="active">{{ $invoice->invoice_number }}</li>
-            @endif
+		@if ($invoice->is_recurring)
+			<li>{!! link_to('invoices', trans('texts.recurring_invoice')) !!}</li>
+		@else
+			<li>{!! link_to(($entityType == ENTITY_QUOTE ? 'quotes' : 'invoices'), trans('texts.' . ($entityType == ENTITY_QUOTE ? 'quotes' : 'invoices'))) !!}</li>
+			<li class="active">{{ $invoice->invoice_number }}</li>
+		@endif
+		{!! $invoice->present()->statusLabel !!}
 		</ol>
 	@endif
 
@@ -566,7 +567,7 @@
 
 	@if (!Auth::user()->account->isPro())
 		<div style="font-size:larger">
-			{!! trans('texts.pro_plan_remove_logo', ['link'=>link_to('/settings/account_management?upgrade=true', trans('texts.pro_plan_remove_logo_link'))]) !!}
+			{!! trans('texts.pro_plan_remove_logo', ['link'=>'<a href="javascript:showUpgradeModal()">' . trans('texts.pro_plan_remove_logo_link') . '</a>']) !!}
 		</div>
 	@endif
 
@@ -899,7 +900,7 @@
         if (!model.invoice().custom_value2()) model.invoice().custom_value2('');
 
         ko.applyBindings(model);
-        onItemChange();
+        onItemChange(true);
 
 
 		$('#country_id').combobox().on('change', function(e) {
@@ -1045,6 +1046,7 @@
                     "dict{{Utils::toClassCase($key)}}":"{{trans('texts.dropzone_'.$key)}}",
                 @endforeach
                 maxFilesize:{{floatval(MAX_DOCUMENT_SIZE/1000)}},
+				parallelUploads:1,
             });
             if(dropzone instanceof Dropzone){
                 dropzone.on("addedfile",handleDocumentAdded);
@@ -1499,7 +1501,7 @@
         }
 	}
 
-	function onItemChange()
+	function onItemChange(silent)
 	{
 		var hasEmpty = false;
 		for(var i=0; i<model.invoice().invoice_items().length; i++) {
@@ -1513,7 +1515,9 @@
 			model.invoice().addItem();
 		}
 
-        //NINJA.formIsChanged = true;
+		if (!silent) {
+        	NINJA.formIsChanged = true;
+		}
 	}
 
     function onPartialChange()
@@ -1523,17 +1527,14 @@
         val = Math.max(Math.min(val, model.invoice().totals.rawTotal()), 0);
 
         if (val != oldVal) {
-            console.log('1');
             if ($('.partial').hasClass('has-error')) {
                 return;
             }
-            console.log('2');
             $('.partial')
                 .addClass('has-error')
                 .find('div')
                 .append('<span class="help-block">{{ trans('texts.partial_value') }}</span>');
         } else {
-            console.log('3');
             $('.partial')
                 .removeClass('has-error')
                 .find('span')

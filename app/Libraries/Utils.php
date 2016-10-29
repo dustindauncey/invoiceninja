@@ -354,12 +354,16 @@ class Utils
         return $data->first();
     }
 
-    public static function formatMoney($value, $currencyId = false, $countryId = false, $showCode = false)
+    public static function formatMoney($value, $currencyId = false, $countryId = false, $decorator = false)
     {
         $value = floatval($value);
 
         if (!$currencyId) {
             $currencyId = Session::get(SESSION_CURRENCY, DEFAULT_CURRENCY);
+        }
+
+        if (!$decorator) {
+            $decorator = Session::get(SESSION_CURRENCY_DECORATOR, CURRENCY_DECORATOR_SYMBOL);
         }
 
         if (!$countryId && Auth::check()) {
@@ -387,7 +391,9 @@ class Utils
         $value = number_format($value, $precision, $decimal, $thousand);
         $symbol = $currency->symbol;
 
-        if ($showCode || !$symbol) {
+        if ($decorator == CURRENCY_DECORATOR_NONE) {
+            return $value;
+        } elseif ($decorator == CURRENCY_DECORATOR_CODE || ! $symbol) {
             return "{$value} {$code}";
         } elseif ($swapSymbol) {
             return "{$value} " . trim($symbol);
@@ -1082,5 +1088,13 @@ class Utils
         }
 
         return url(NINJA_DOCS_URL . $page);
+    }
+
+    public static function calculateTaxes($amount, $taxRate1, $taxRate2)
+    {
+        $tax1 = round($amount * $taxRate1 / 100, 2);
+        $tax2 = round($amount * $taxRate2 / 100, 2);
+
+        return round($amount + $tax1 + $tax2, 2);
     }
 }
